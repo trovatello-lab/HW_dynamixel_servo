@@ -40,12 +40,13 @@ class DynamixelXServosHW(HardwareComponent):
         for sname, sid in self.devices.items():
             
             #self.settings[sname + "_model_num"] = self.dev.read_value(sid, 'model_num')
-            
+
             lq = self.settings.get_lq(sname + "_oper_mode")
             lq.connect_to_hardware(
-                read_func = lambda sid=sid: self.dev.read_operating_mode(sid) 
-                )
-            
+                read_func = lambda sid=sid: self.dev.read_operating_mode(sid), 
+                write_func = lambda mode, sid=sid: self.dev.write_operating_mode(sid, mode)
+                )            
+
             for ctrl in control_lut.values():
                 
                 lq = self.settings.get_lq(sname + "_" + ctrl.name)
@@ -81,3 +82,4 @@ class DynamixelXServosHW(HardwareComponent):
             self.read_from_hardware()
         except Exception as err:
             print(self.name, "Error in treaded_update", err)
+            
