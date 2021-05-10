@@ -1,13 +1,12 @@
 from ScopeFoundry.hardware import HardwareComponent
 
 
-class DynamixelLinearHW(HardwareComponent):
+class DynamixelServoHW(HardwareComponent):
     
-    name = 'dynamixel_linear'
-    
+    name = 'servo'
 
     def __init__(self, app, debug=False, 
-                 name='dynamixel_linear', 
+                 name=None, 
                  lq_kwargs={'spinbox_decimals':2, 'unit':'deg'},
                  ):
         self.lq_kwargs = lq_kwargs
@@ -63,6 +62,7 @@ class DynamixelLinearHW(HardwareComponent):
         
         
     def set_mode(self):
+        # TODO Check if torque is enabled before enable/disable
         S = self.settings
         self.servos.settings[S['servo_name']+'_torque'] = False
         self.servos.settings[S['servo_name']+'_oper_mode'] = S['mode']
