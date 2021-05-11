@@ -4,14 +4,26 @@ Created on Apr 26, 2021
 @author: Benedikt Ursprung
 '''
 from ScopeFoundry.hardware import HardwareComponent
+import time
 
 class DynamixelFilterWheelHW(HardwareComponent):
     
     name = 'filter_wheel'
     
-    def __init__(self, app, debug=False, name='filter_wheel', named_positions={'Other':0}):
-                 
-        self.named_positions = named_positions
+    def __init__(self, app, debug=False, name=None, 
+                 named_positions={'Other':0}, 
+                 positions_in_degrees=False,
+                 release_at_target=False,
+                 ):
+                             
+        if positions_in_degrees:
+            self.named_positions = {}
+            for pos,deg in named_positions.items():
+                self.named_positions.update({pos:int(deg*4096/360)})
+        else: 
+            self.named_positions = named_positions
+            
+        self.release_at_target = release_at_target                   
         HardwareComponent.__init__(self, app, debug=debug, name=name)
         
         
@@ -19,14 +31,12 @@ class DynamixelFilterWheelHW(HardwareComponent):
         
         S = self.settings
         S.New('dynamixel_hw', initial='dynamixel_servos', dtype=str)
-        S.New('servo_name', initial='test2', dtype=str)
+        S.New('servo_name', initial=self.name, dtype=str)
         S.New('offset', initial=0, unit='steps', dtype=int)
-
         S.New('position', unit='steps', dtype=int)
-        S.New('deg', unit='deg', dtype=float)
 
         S.New('target_position', unit='steps', dtype=int)
-        S.New('target_deg', unit='deg', dtype=float)
+        S.New('release_at_target', dtype=bool, initial=self.release_at_target)
         
         if type(self.named_positions) == dict:
             self.settings.New('named_position', dtype=str, 
@@ -36,7 +46,7 @@ class DynamixelFilterWheelHW(HardwareComponent):
             for name, pos in self.named_positions.items():
                 self.add_operation('Goto '+name, lambda name=name: self.settings.named_position.update_value(name))
                 
-        self.add_operation('zero position', self.zero_position)
+        self.add_operation('set offset', self.set_offset)
         
     def connect(self):
         
@@ -44,19 +54,16 @@ class DynamixelFilterWheelHW(HardwareComponent):
         servos = self.servos = self.app.hardware[S['dynamixel_hw']]
         servos.settings['connected'] = True
 
-        servos.settings[S['servo_name']+'_torque'] = False # unexpected behavior if not enabled
-        servos.settings[S['servo_name']+'_mode'] = 3 #'position'
+        # set mode to extended_position
+        servos.settings[S['servo_name']+'_torque'] = False
+        servos.settings[S['servo_name']+'_mode'] = 4
         servos.settings[S['servo_name']+'_torque'] = True # unexpected behavior if not enabled
         
         S.target_position.connect_lq_scale(
             servos.settings.get_lq(S['servo_name']+'_target_position'), scale=1) #NOTE, not disconnected on disconnect       
-        S.target_deg.connect_lq_math(S.target_position, self.steps2deg, 
-                                     self.deg2steps)
 
         S.position.connect_lq_scale(
             servos.settings.get_lq(S['servo_name']+'_position'), scale=1) #NOTE, not disconnected on disconnect       
-        S.deg.connect_lq_math(S.position, self.steps2deg, 
-                                     self.deg2steps)
           
         if 'named_position' in self.settings:
             self.settings.named_position.connect_to_hardware(
@@ -67,23 +74,22 @@ class DynamixelFilterWheelHW(HardwareComponent):
         pass
         
     def goto_named_position(self, name):
+        S = self.settings
         if name != 'Other':
-            self.settings['target_deg'] = self.named_positions[name]                      
+            self.servos.settings[S['servo_name']+'_torque'] = True
+            self.settings['target_position'] = self.named_positions[name] + S['offset']
+
+            if S['release_at_target']:
+                time.sleep(0.8)  # ToDo: instead of waiting, check if is moving
+                self.servos.settings[S['servo_name']+'_torque'] = False
+                                   
             
-    def zero_position(self):
+    def set_offset(self):
         current_position = self.servos.settings[self.settings['servo_name']+'_position']
         self.settings['offset'] = current_position
-                
-    def steps2deg(self, steps):
-        offset = self.settings['offset']
-        return ( (steps - offset) *360./4096. ) % 360
-    
-    def deg2steps(self, deg):
-        offset = self.settings['offset']
-        return ( int(4096*deg/360) + offset ) % 4096
         
-        
-    
+
+
         
 
         
