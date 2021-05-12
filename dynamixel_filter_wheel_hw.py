@@ -80,7 +80,10 @@ class DynamixelFilterWheelHW(HardwareComponent):
             self.settings['target_position'] = self.named_positions[name] + S['offset']
 
             if S['release_at_target']:
-                time.sleep(0.8)  # ToDo: instead of waiting, check if is moving
+                time.sleep(0.1)
+                moving_lq  = self.servos.settings.get_lq(S['servo_name']+'_moving')
+                while moving_lq.read_from_hardware():
+                    time.sleep(0.05)
                 self.servos.settings[S['servo_name']+'_torque'] = False
                                    
             
