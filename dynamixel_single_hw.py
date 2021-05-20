@@ -95,9 +95,9 @@ class DynamixelServoHW(HardwareComponent):
     def steps2position(self, steps):
         offset = self.settings['offset']
         scale = self.settings['scale']
-        m = {'position':scale*4096, 
-             'extended_position':scale*2**32}[self.settings['mode']]                
-        return ( (steps - offset) * scale ) % m
+        #m = {'position':scale*4096, 
+        #     'extended_position':scale*2**32}[self.settings['mode']]                
+        return ( (steps - offset) * scale ) 
 
     def fromServo(self, servo_pos):
         sign = {True:-1, False:1}[self.settings['reverse']]
