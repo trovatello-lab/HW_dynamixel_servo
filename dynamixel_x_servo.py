@@ -85,7 +85,8 @@ CONTROL_TABLE = [
     ('position', 132, 4, 'r', int),
     ('temp', 146, 1, 'r', int),
     ('target_position', 116, 4, 'rw', int ),
-    ('moving', 122, 1, 'r', bool)
+    ('moving', 122, 1, 'r', bool),
+    ('profile_velocity', 112, 4, 'rw', int),
     ]
 
 ctrl_row = namedtuple('ControlRow', ['name', 'addr', 'bytes', 'access', 'dtype'])
