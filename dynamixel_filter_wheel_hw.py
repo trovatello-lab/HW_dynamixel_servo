@@ -67,8 +67,18 @@ class DynamixelFilterWheelHW(HardwareComponent):
           
         if 'named_position' in self.settings:
             self.settings.named_position.connect_to_hardware(
+                read_func=self.read_named_position,
                 write_func=self.goto_named_position
                 )
+            
+        self.read_from_hardware()
+            
+    def read_named_position(self):
+        pos = self.settings['position']
+        def closest(lst, K):
+            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
+        closest_value = closest(list(self.named_positions.values()), pos)
+        return {v: k for k, v in self.named_positions.items()}[closest_value]
         
     def disconnect(self):
         pass
