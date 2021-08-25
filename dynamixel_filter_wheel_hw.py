@@ -37,14 +37,15 @@ class DynamixelFilterWheelHW(HardwareComponent):
 
         S.New('target_position', unit='steps', dtype=int)
         S.New('release_at_target', dtype=bool, initial=self.release_at_target)
+        S.New('profile_velocity', int, initial=180)  # 0 is fastest, 255 2nd fastest ... 1 is slowest 
         
         if type(self.named_positions) == dict:
-            self.settings.New('named_position', dtype=str, 
-                              initial = list(self.named_positions.keys())[0],
-                              choices = tuple(self.named_positions.keys()) )
+            self.settings.New('named_position', dtype=str,
+                              initial=list(self.named_positions.keys())[0],
+                              choices=tuple(self.named_positions.keys()))
             
             for name, pos in self.named_positions.items():
-                self.add_operation('Goto '+name, lambda name=name: self.settings.named_position.update_value(name))
+                self.add_operation('Goto ' + name, lambda name=name: self.settings.named_position.update_value(name))
                 
         self.add_operation('set offset', self.set_offset)
         
@@ -55,15 +56,19 @@ class DynamixelFilterWheelHW(HardwareComponent):
         servos.settings['connected'] = True
 
         # set mode to extended_position
-        servos.settings[S['servo_name']+'_torque'] = False
-        servos.settings[S['servo_name']+'_mode'] = 4
-        servos.settings[S['servo_name']+'_torque'] = True # unexpected behavior if not enabled
-        
+        servos.settings[S['servo_name'] + '_torque'] = False
+        servos.settings[S['servo_name'] + '_profile_velocity'] = S['profile_velocity']
+        servos.settings[S['servo_name'] + '_mode'] = 4
+        servos.settings[S['servo_name'] + '_torque'] = True  # unexpected behavior if not enabled
+                
         S.target_position.connect_lq_scale(
-            servos.settings.get_lq(S['servo_name']+'_target_position'), scale=1) #NOTE, not disconnected on disconnect       
+            servos.settings.get_lq(S['servo_name'] + '_target_position'), scale=1)  # NOTE, not disconnected on disconnect       
 
         S.position.connect_lq_scale(
-            servos.settings.get_lq(S['servo_name']+'_position'), scale=1) #NOTE, not disconnected on disconnect       
+            servos.settings.get_lq(S['servo_name'] + '_position'), scale=1)  # NOTE, not disconnected on disconnect       
+
+        S.profile_velocity.connect_lq_scale(
+            servos.settings.get_lq(S['servo_name'] + '_profile_velocity'), scale=1)  # NOTE, not disconnected on disconnect
           
         if 'named_position' in self.settings:
             self.settings.named_position.connect_to_hardware(
@@ -75,8 +80,10 @@ class DynamixelFilterWheelHW(HardwareComponent):
             
     def read_named_position(self):
         pos = self.settings['position']
+
         def closest(lst, K):
-            return lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
+            return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - K))]
+
         closest_value = closest(list(self.named_positions.values()), pos)
         return {v: k for k, v in self.named_positions.items()}[closest_value]
         
@@ -86,23 +93,19 @@ class DynamixelFilterWheelHW(HardwareComponent):
     def goto_named_position(self, name):
         S = self.settings
         if name != 'Other':
-            self.servos.settings[S['servo_name']+'_torque'] = True
+            self.servos.settings[S['servo_name'] + '_torque'] = True
             self.settings['target_position'] = self.named_positions[name] + S['offset']
 
             if S['release_at_target']:
                 time.sleep(0.1)
-                moving_lq  = self.servos.settings.get_lq(S['servo_name']+'_moving')
+                moving_lq = self.servos.settings.get_lq(S['servo_name'] + '_moving')
                 while moving_lq.read_from_hardware():
                     time.sleep(0.05)
-                self.servos.settings[S['servo_name']+'_torque'] = False
-                                   
+                time.sleep(0.1)
+                self.servos.settings[S['servo_name'] + '_torque'] = False
             
     def set_offset(self):
-        current_position = self.servos.settings[self.settings['servo_name']+'_position']
+        current_position = self.servos.settings[self.settings['servo_name'] + '_position']
         self.settings['offset'] = current_position
-        
-
-
-        
 
         
