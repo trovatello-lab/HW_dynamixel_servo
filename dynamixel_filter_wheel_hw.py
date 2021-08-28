@@ -6,26 +6,36 @@ Created on Apr 26, 2021
 from ScopeFoundry.hardware import HardwareComponent
 import time
 
+
 class DynamixelFilterWheelHW(HardwareComponent):
     
     name = 'filter_wheel'
     
-    def __init__(self, app, debug=False, name=None, 
-                 named_positions={'Other':0}, 
+    def __init__(self, app, debug=False, name=None,
+                 named_positions={'Other':[0, 'red']},  # {'name':pos} or {'name',[pos,'color']} are valid.
+                 # color can be https://www.w3.org/TR/SVG11/types.html#ColorKeywords or more 
                  positions_in_degrees=False,
-                 release_at_target=False,
+                 release_at_target=False
                  ):
-                             
-        if positions_in_degrees:
-            self.named_positions = {}
-            for pos,deg in named_positions.items():
-                self.named_positions.update({pos:int(deg*4096/360)})
-        else: 
-            self.named_positions = named_positions
-            
-        self.release_at_target = release_at_target                   
-        HardwareComponent.__init__(self, app, debug=debug, name=name)
         
+        self.colors = []
+        self.named_positions = {}
+        
+        for pos, _val in named_positions.items():
+            if hasattr(_val, '__len__'):
+                val = _val[0]
+                self.colors.append(_val[1])
+            else:
+                val = _val
+                
+            if positions_in_degrees:
+                self.named_positions.update({pos:int(val * 4096 / 360)})   
+            else:
+                self.named_positions.update({pos:int(val)})                 
+
+        self.release_at_target = release_at_target
+                           
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
         
     def setup(self):
         
@@ -36,13 +46,14 @@ class DynamixelFilterWheelHW(HardwareComponent):
         S.New('position', unit='steps', dtype=int)
 
         S.New('target_position', unit='steps', dtype=int)
-        S.New('release_at_target', dtype=bool, initial=self.release_at_target)
+        S.New('release_at_target', dtype=bool, initial=self.release_at_target, colors=['coral','lime'])
         S.New('profile_velocity', int, initial=180)  # 0 is fastest, 255 2nd fastest ... 1 is slowest 
         
         if type(self.named_positions) == dict:
             self.settings.New('named_position', dtype=str,
                               initial=list(self.named_positions.keys())[0],
-                              choices=tuple(self.named_positions.keys()))
+                              choices=tuple(self.named_positions.keys()),
+                              colors=self.colors)
             
             for name, pos in self.named_positions.items():
                 self.add_operation('Goto ' + name, lambda name=name: self.settings.named_position.update_value(name))
@@ -107,5 +118,4 @@ class DynamixelFilterWheelHW(HardwareComponent):
     def set_offset(self):
         current_position = self.servos.settings[self.settings['servo_name'] + '_position']
         self.settings['offset'] = current_position
-
         
