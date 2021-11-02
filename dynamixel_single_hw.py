@@ -30,13 +30,13 @@ class DynamixelServoHW(HardwareComponent):
                 
         S.New('target_position', dtype=float, **self.lq_kwargs)
         S.New('position', dtype=float, ro=True, **self.lq_kwargs)
-        S.New('jog', **self.lq_kwargs)
+        S.New('jog', initial=10, **self.lq_kwargs)
         
         self.add_operation('jog fwd', self.jog_fwd)
         self.add_operation('jog bkwd', self.jog_bkwd)
         self.add_operation('Zero Position', self.zero_position)
         
-        #S.mode.add_listener(self.set_mode)
+        S.mode.add_listener(self.set_mode)
 
         
     def connect(self):

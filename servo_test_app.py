@@ -1,7 +1,6 @@
 from ScopeFoundry.base_app import BaseMicroscopeApp
 from ScopeFoundryHW.dynamixel_servo.dynamixel_x_servo_hw import DynamixelXServosHW
 from ScopeFoundryHW.dynamixel_servo.dynamixel_filter_wheel_hw import DynamixelFilterWheelHW
-from ScopeFoundryHW.dynamixel_servo.dynamixel_linear_hw import DynamixelLinearHW
 
 
 class ServoTestApp(BaseMicroscopeApp):
@@ -10,23 +9,21 @@ class ServoTestApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        servos = self.add_hardware(DynamixelXServosHW(self, devices=dict(test2=2)))
-        #filter_wheel = self.add_hardware(DynamixelFilterWheelHW(self,
-        #                                 named_positions={'empty': 0.0,
-        #                                                  '1064_BP': 60, 
-        #                                                  '950_SP': 120}
-        #                                 ))
-                                                                
-        self.add_hardware(DynamixelLinearHW(self))
+        servos = self.add_hardware(DynamixelXServosHW(self, devices=dict(reflector_wheel=33,)))
 
-        from confocal_measure.auto_focus import AutoFocusMeasure
-        self.add_measurement(AutoFocusMeasure(self))
-
+        self.add_hardware(DynamixelFilterWheelHW(self, name='reflector_wheel',
+                                        named_positions={'empty':  (90, "lightgreen"),
+                                                         'mirror': (180, 'yellowgreen'),
+                                                         'glass':  (270, "lime"),
+                                                         },))
                                                                                   
         servos.settings['port'] = 'COM11'
+        servos.settings['connected'] = True
+
         
 if __name__ == '__main__':
 
     import sys
     app = ServoTestApp(sys.argv)
+    # app.qtapp.setStyle('Fusion')
     sys.exit(app.exec_())
