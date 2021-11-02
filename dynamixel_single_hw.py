@@ -17,7 +17,7 @@ class DynamixelServoHW(HardwareComponent):
 
         S = self.settings
         S.New('dynamixel_hw', initial='dynamixel_servos', dtype=str)
-        S.New('servo_name', initial='test2', dtype=str)
+        S.New('servo_name', initial=self.name, dtype=str)
         S.New('mode', initial='position', dtype=str, choices=['extended_position','position'])
         S.New('reverse', initial=False, dtype=bool)
         
