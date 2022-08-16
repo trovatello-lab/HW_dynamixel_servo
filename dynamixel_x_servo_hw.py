@@ -35,7 +35,7 @@ class DynamixelXServosHW(HardwareComponent):
         #from ScopeFoundryHW.dynamixel_servo.dynamixel_x_servo import DynamixelServos
         
         self.dev = DynamixelServos(port=self.settings['port'])
-        
+        self.dev.portHandler.setPacketTimeoutMillis(1000.)
         
         for sname, sid in self.devices.items():
             
