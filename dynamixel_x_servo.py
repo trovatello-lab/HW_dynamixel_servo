@@ -74,22 +74,22 @@ class OperatingModes(Enum):
 
 
 CONTROL_TABLE = [
-    ('model_num', 0, 2, 'r', int),
-    ('mode', 11, 1, 'rw', OperatingModes),
-    ('vel_limit', 44, 4, 'rw', int),
+    ('model_num', 0, 2, 'r', int, False),
+    ('mode', 11, 1, 'rw', OperatingModes, False),
+    ('vel_limit', 44, 4, 'rw', int, False),
     #
-    ('torque', 64, 1, 'rw', bool),
-    ('led', 65, 1, 'rw', bool),
-    ('time_tick', 120, 2, 'r', int),
-    ('velocity', 128, 4, 'r', int),
-    ('position', 132, 4, 'r', int),
-    ('temp', 146, 1, 'r', int),
-    ('target_position', 116, 4, 'rw', int ),
-    ('moving', 122, 1, 'r', bool),
-    ('profile_velocity', 112, 4, 'rw', int),
+    ('torque', 64, 1, 'rw', bool, False),
+    ('led', 65, 1, 'rw', bool, False),
+    ('time_tick', 120, 2, 'r', int, False),
+    ('velocity', 128, 4, 'r', int, False),
+    ('position', 132, 4, 'r', int, False),
+    ('temp', 146, 1, 'r', int, False),
+    ('target_position', 116, 4, 'rw', int, True),
+    ('moving', 122, 1, 'r', bool, False),
+    ('profile_velocity', 112, 4, 'rw', int, False),
     ]
 
-ctrl_row = namedtuple('ControlRow', ['name', 'addr', 'bytes', 'access', 'dtype'])
+ctrl_row = namedtuple('ControlRow', ['name', 'addr', 'bytes', 'access', 'dtype', 'protected'])
 control_lut = dict()
 for row in CONTROL_TABLE:
     control_lut[row[0]] = ctrl_row(*row)
